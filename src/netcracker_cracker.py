@@ -8,6 +8,7 @@ from tempfile import mkdtemp
 from random import randrange
 from time import sleep
 from sys import stdout
+from shemutils import Logger
 
 write = stdout.write
 flush = stdout.flush
@@ -15,6 +16,7 @@ flush = stdout.flush
 DN = open(os.devnull, "w")
 ERRLOG = open(os.devnull, "w")
 OUTLOG = open(os.devnull, "w")
+logger = Logger("CRACKER", logfile="/tmp/netcracker_cracker.log")
 
 
 def breakProcess(proc):
@@ -51,20 +53,20 @@ class PCAP:
 
 class Crack:
     def __init__(self, pcap_file):
-        if (path.isfile(pcap_file) == False):
-            print "File Not Found"
-            exit(-10)
+        if path.isfile(pcap_file) is False:
+            logger.critical("File '{0}' was not found.".format(pcap_file))
+            exit(1)
 
         """Criamos as pastas temporarias para guardar os arquivos"""
-        if (self.CreateTempFolder() != 0):
-            print "Error creating temp folder"
-            exit(-1)
+        if self.CreateTempFolder():
+            logger.critical("Error creating temporary folders.")
+            exit(1)
 
         """Validamos a existencia do arquivo e retornamos o caminho absoluto"""
         self.fvCode, self.inputFile = self.checkFileExists(pcap_file)
-        if (self.fvCode != 0):  # File is invalid
-            print "File is invalid"
-            exit(-2)
+        if self.fvCode:  # File is invalid
+            logger.critical("File is invalid.")
+            exit(1)
 
     def crackHandshake(self, wl_file, program="pyrit"):
         try:
@@ -114,17 +116,17 @@ class Crack:
             return -1
 
     def printPyritOutput(self, code, data):
-        if (code == 0):  # running
+        if code == 0:  # running
             tried = data[0]
             psec = data[1]
             flush()
             write("%sPasswords: %s | Passwords/sec: %s     \r" % (W, YELLOW + str(tried) + W, YELLOW + str(psec) + W))
             return 0
-        if (code == 1):  # not found
+        if code == 1:  # not found
             flush()
             write(GR + "\nPassword is not in this wordlist.\n" + W)
             return 1
-        if (code == 2):  # found
+        if code == 2:  # found
             flush()
             write("\n%s\n" % (BOLD + YELLOW + data + W))
             return 1
@@ -138,9 +140,9 @@ class Crack:
 
         p = ParseData()
         try:
-            if (p.not_found in line):
-                return (1, None)
-            if (p.tries in line):
+            if p.not_found in line:
+                return 1, None
+            if p.tries in line:
                 fpmk = line.index("PMK") - 1
                 tried = line[6:fpmk]
 
@@ -148,12 +150,12 @@ class Crack:
                 inicio = line.index(";") + 2
                 perSecond = line[inicio:fim]
 
-                return (0, (tried, perSecond))
-            if (p.found in line):
-                return (2, line)
-            return (-1, None)
+                return 0, (tried, perSecond)
+            if p.found in line:
+                return 2, line
+            return -1, None
         except:
-            return (-1, None)
+            return -1, None
 
     def checkHandshakeStatus(self):
         command = "pyrit -r %s analyze" % (self.inputFile.absolute)
@@ -162,19 +164,19 @@ class Crack:
         if (status == 1):
             return (status, essid, bssid)
         else:
-            return (status, essid, bssid)
+            return status, essid, bssid
 
     def parseVerificationPyritPcapFile(self, output):
         success = "spread"
         essid = "AccessPoint"
         for line in output:
-            if (essid in line):
+            if essid in line:
                 essid = str(str(line[36:]).replace("'):", "")).replace("\n", "")
                 bssid = str(str(line[16:33]).replace(":", "-")).upper()
         for line in output:
             if (success in line):
-                return (1, essid, bssid)
-        return (0, None, None)
+                return 1, essid, bssid
+        return 0, None, None
 
     def generateRandomFileName(self, prefix="netcracker"):
         r = self.temp + prefix + "_" + "%d.tmp" % (randrange(10000, 1000000))
@@ -195,18 +197,18 @@ class Crack:
 
     def returnOutput(self, command):
         proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
-        while (proc.poll() == None):
+        while proc.poll() == None:
             sleep(0.5)
         data = str(proc.communicate()).split("\n")
         data = str(data[0]).split("\\n")
         return data
 
     def checkFileExists(self, file):
-        if (path.isfile(file)):
+        if path.isfile(file):
             absoPath = path.abspath(file)
-            return (0, PCAP(absoPath))
+            return 0, PCAP(absoPath)
         else:
-            return (-1, None)
+            return -1, None
 
     def CreateTempFolder(self, prefix='netcracker'):
         self.temp = mkdtemp(prefix=prefix)
