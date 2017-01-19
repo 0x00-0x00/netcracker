@@ -36,6 +36,37 @@ def generate_mac(mac_size=6):
 class Interface:
     def __init__(self, interface):
         self.interface = interface
+        self.state = self._check_state()
+        self.mode = self._check_mode()
+
+    def _check_state(self):
+        """
+        Issues 'ifconfig' and check if interface is there.
+        If an interface is not listed in 'ifconfig', it means that it is not in UP state, impliciting that
+        it is in DOWN state.
+        """
+        proc = Popen("ifconfig")
+        stdout, stderr = proc.communicate()
+        if self.interface in stdout:
+            return 1
+        else:
+            return 0
+
+    def _check_mode(self):
+        """
+        Issue a 'iwconfig INTERFACE' and get it's output. 
+        If the word 'managed' is in output, means that the current interface is in 'Managed' mode.
+        Yet, check the same way for the word 'monitor' meaning that the interface is in 'Monitor' mode.
+        If neither words were caught, returns 0.
+        """
+        proc = Popen("iwconfig {0}".format(self.interface))
+        stdout, stderr = proc.communicate()
+        if "managed" in stdout.lower():
+            return "managed"
+        elif "monitor" in stdout.lower():
+            return "monitor"
+        else:
+            return 0
 
     def changeMac(self, mode):
         if not mode:
