@@ -1,6 +1,5 @@
 # coding:utf-8
-from netcracker_wordlister import *
-from netcracker import *
+from wordlist import *
 from os import mkdir, path, remove
 from shutil import copy
 
@@ -162,25 +161,25 @@ def returnObjects(scanner_obj):
     return aps, sts, pes
 
 
-def copyFileToRepository(file, newname=None):
-    if path.isfile(file):
+def copyFileToRepository(f, newname=None):
+    if path.isfile(f):
         try:
             if not newname:
-                copy(file, "/usr/share/netcracker/handshakes/uncracked/")
+                copy(f, "/usr/share/netcracker/handshakes/uncracked/")
             else:
-                copy(file, "/usr/share/netcracker/handshakes/uncracked/" + str(newname).replace(" ", ""))
+                copy(f, "/usr/share/netcracker/handshakes/uncracked/" + str(newname).replace(" ", ""))
         except Exception as e:
             print "ERROR: %s" % (str(e))
 
 
-def extractData(file):
-    with open(file, "rb") as f:
+def extractData(f):
+    with open(f, "rb") as f:
         data = f.read()
     return data
 
 
-def createMainFolder(dir="netcracker"):
-    main_dir = "/usr/share/%s" % dir
+def createMainFolder(d="netcracker"):
+    main_dir = "/opt/%s" % d
     subfolders = ["handshakes", "database", "handshakes/cracked", "handshakes/uncracked"]
     if path.isdir(main_dir) is False:
         mkdir(main_dir)
@@ -190,12 +189,12 @@ def createMainFolder(dir="netcracker"):
     return
 
 
-def verify(object):
-    status, essid, bssid = object.checkHandshakeStatus()
+def verify(obj):
+    status, essid, bssid = obj.checkHandshakeStatus()
     if status == 1:
         print BOLD + "File ...: %s %scontains%s%s handshakes. \n[ESSID: %s, BSSID: %s]" % (
-            object.inputFile.base, G, W, BOLD, G + essid + W + BOLD, G + bssid + W + BOLD) + W
+            obj.inputFile.base, G, W, BOLD, G + essid + W + BOLD, G + bssid + W + BOLD) + W
         return 0, essid, bssid
     else:
-        print BOLD + "File: %s %sdoes not%s contains handshakes." % (object.inputFile.base, R, W) + W
+        print BOLD + "File: %s %sdoes not%s contains handshakes." % (obj.inputFile.base, R, W) + W
         return -1, essid, bssid

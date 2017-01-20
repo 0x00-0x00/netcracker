@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # coding:utf-8
-from netcracker import *
+from netcracker.main_func import createMainFolder
+from netcracker.database_func import accessDatabase, createTables
+from netcracker.scanner import Scanner
+from netcracker.main_func import returnObjects, filterCandidatesWPACapture, printAvailableAPsToAttack
 from os import path, remove
 from sys import stdout
 from argparse import ArgumentParser
@@ -8,6 +11,7 @@ from shemutils import Logger
 
 write = stdout.write
 flush = stdout.flush
+logger = Logger("NetCracker")
 
 
 def program_header():

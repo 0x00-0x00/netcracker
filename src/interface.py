@@ -2,9 +2,12 @@
 from os import system
 from subprocess import Popen, PIPE
 from time import sleep
+from shemutils import Logger
+from netcracker.colors import *
+
 import os
 import random
-from shemutils import Logger
+
 
 # Static variables
 DN = open(os.devnull, "w")
@@ -27,9 +30,9 @@ def validate_mac(mac):
 
 
 def generate_mac(mac_size=6):
-    mac = [hex(random.randint(1, 255)).strip("0x") for x in range(mac_size)]
+    mac = ["%02x" % int(hex(random.randint(1, 255)).strip("0x"), 16) for x in range(mac_size)]
     while not validate_mac(mac):
-        mac = [hex(random.randint(1, 255)).strip("0x") for x in range(mac_size)]
+        mac = ["%02x" % int(hex(random.randint(1, 255)).strip("0x"), 16) for x in range(mac_size)]
     return ':'.join(mac)
 
 
@@ -45,7 +48,7 @@ class Interface:
         If an interface is not listed in 'ifconfig', it means that it is not in UP state, impliciting that
         it is in DOWN state.
         """
-        proc = Popen("ifconfig")
+        proc = Popen("ifconfig", stdout=PIPE, stderr=PIPE, shell=True)
         stdout, stderr = proc.communicate()
         if self.interface in stdout:
             return 1
@@ -59,23 +62,33 @@ class Interface:
         Yet, check the same way for the word 'monitor' meaning that the interface is in 'Monitor' mode.
         If neither words were caught, returns 0.
         """
-        proc = Popen("iwconfig {0}".format(self.interface))
+        proc = Popen("iwconfig {0}".format(self.interface), shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
         if "managed" in stdout.lower():
             return "managed"
         elif "monitor" in stdout.lower():
             return "monitor"
         else:
+            logger.error("Could not get interface mode.")
             return 0
 
     def changeMac(self, mode):
+        if self.mode is "monitor":
+            self.changePower("down")
+            self.changeMode("managed")
+
+        if self.state is 1:
+            self.changePower("down")
+
         if not mode:
-            command = "ifconfig {0} hw ether {1}".format(self.interface, generate_mac())
-            logger.debug("Command issued: {0}".format(command))
+            mac = generate_mac()
+            logger.debug("Changing interface mac to {0} ...".format(mac))
+            command = "ifconfig {0} hw ether {1}".format(self.interface, mac)
+            #  logger.debug("Command issued: {0}".format(command))
             proc = Popen(command, shell=True, stdout=DN, stderr=DN)
             while proc.poll() is None:
                 sleep(0.5)
-            if proc.poll() == 0:
+            if not proc.poll():
                 return 0
             else:
                 return -1

@@ -1,6 +1,4 @@
 # coding:utf-8
-from netcracker import *
-from netcracker_interface import *
 from subprocess import Popen, call, PIPE
 import os
 from os import path, system
@@ -8,6 +6,8 @@ from time import time, ctime, sleep
 from tempfile import mkdtemp
 import sys
 from shemutils import Logger
+from netcracker.interface import *
+
 
 try:
     from tabulate import tabulate
@@ -21,7 +21,7 @@ from signal import SIGINT, SIGTERM
 DN = open(os.devnull, "w")
 ERRLOG = open(os.devnull, "w")
 OUTLOG = open(os.devnull, "w")
-logger = Logger("SCAN", logfile="/tmp/netcracker_scanner.log")
+logger = Logger("SCAN")
 
 
 def send_interrupt(process):
@@ -140,15 +140,14 @@ class Station:
         if (len(mac) < 13):
             return False
         else:
-            if (mac[2] == ":" and mac[5] == ":" and mac[8] == ":" and mac[11] == ":" and mac[14] == ":"):
+            if mac[2] == ":" and mac[5] == ":" and mac[8] == ":" and mac[11] == ":" and mac[14] == ":":
                 return True
         return False
 
 
 class Scanner:
     def __init__(self, interface, timeout=0):
-        self.interface = None
-
+        self.interface = Interface(interface)
         logger.info("Initializing scanner ...")
 
         if self.setupInterfaceForScan(interface) != 0:
@@ -194,16 +193,18 @@ class Scanner:
         return 0
 
     def setupInterfaceForScan(self, interface):
-        self.interface = Interface(interface)
         if self.interface.changePower("down") != 0:
             logger.error("Could not turn interface {0} down.".format(interface))
             return -1
-        if self.interface.changeMode("monitor") != 0:
-            logger.error("Could not turn interface {0} into monitor mode.".format(interface))
-            return -1
+
         if self.interface.changeMac(0) != 0:
             logger.error("Could not change mac from interface {0}.".format(interface))
             return -1
+
+        if self.interface.changeMode("monitor") != 0:
+            logger.error("Could not turn interface {0} into monitor mode.".format(interface))
+            return -1
+
         if self.interface.changePower("up") != 0:
             logger.error("Could not turn interface {0} up.".format(interface))
             return -1
@@ -212,18 +213,21 @@ class Scanner:
     def setupInterfaceAfterScan(self):
         if self.interface.changePower("down") != 0:
             return -1
+
         if self.interface.changeMode("managed") != 0:
             return -1
-        if (self.interface.changeMac(1) != 0):
+
+        if self.interface.changeMac(1) != 0:
             exit(-1)
-        if (self.interface.changePower("up") != 0):
+
+        if self.interface.changePower("up") != 0:
             exit(-1)
         return 0
 
     def countTime(self, x):
-        if (x == 0):
+        if x == 0:
             self.start = time()
-        elif (x == 1):
+        elif x == 1:
             self.end = time()
         else:
             self.total = formatTime(self.end - self.start)
@@ -253,6 +257,7 @@ class Scanner:
         return 0
 
     def initScan(self):
+        logger.debug("Storing data into {0}.".format(self.tempFile))
         self.command = ['airodump-ng', str(self.interface.interface), '-a', '-w', self.tempFile, "--output-format",
                         "csv"]
         self.process = Popen(self.command, stdout=DN, stderr=DN)
