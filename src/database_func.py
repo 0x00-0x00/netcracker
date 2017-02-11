@@ -5,7 +5,7 @@ from time import time
 from shutil import copy
 
 
-def accessDatabase(name="/opt/netcracker/database/netcracker.db"):
+def accessDatabase(name=os.environ["HOME"] + os.sep + ".netcracker/database/netcracker.db"):
     db = Database(name)
     db.text_factory = lambda x: unicode(x, "utf-8", "ignore")
     return db
