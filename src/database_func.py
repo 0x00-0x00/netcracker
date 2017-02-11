@@ -1,5 +1,5 @@
 # coding:utf-8
-from netcracker.netcracker_database import *
+from netcracker.database import *
 from os import system, path
 from time import time
 from shutil import copy
