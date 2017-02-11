@@ -1,11 +1,16 @@
 # coding:utf-8
+import os
 from netcracker.database import *
 from os import system, path
 from time import time
 from shutil import copy
 
 
-def accessDatabase(name=os.environ["HOME"] + os.sep + ".netcracker/database/netcracker.db"):
+#  Define the project folder
+project_folder = os.environ["HOME"] + os.sep + ".netcracker" + os.sep
+
+
+def accessDatabase(name="{0}database/netcracker.db".format(project_folder)):
     db = Database(name)
     db.text_factory = lambda x: unicode(x, "utf-8", "ignore")
     return db
@@ -151,9 +156,9 @@ def copyFileToRepository(file, newname=None):
     if path.isfile(file):
         try:
             if newname == None:
-                copy(file, "/usr/share/netcracker/handshakes/uncracked/")
+                copy(file, "{0}handshakes/uncracked/".format(project_folder))
             else:
-                copy(file, "/usr/share/netcracker/handshakes/uncracked/" + str(newname).replace(" ", ""))
+                copy(file, "{0}handshakes/uncracked/{1}".format(project_folder, newname.replace(" ", "")))
         except Exception as e:
             print "ERROR: %s" % (str(e))
 
