@@ -168,9 +168,9 @@ def copyFileToRepository(f, newname=None):
     if path.isfile(f):
         try:
             if not newname:
-                copy(f, "/usr/share/netcracker/handshakes/uncracked/")
+                copy(f, "{0}handshakes/uncracked/".format(project_folder))
             else:
-                copy(f, "/usr/share/netcracker/handshakes/uncracked/" + str(newname).replace(" ", ""))
+                copy(f, "{0}handshakes/uncracked/{1}".format(project_folder, newname.replace(" ", "")))
         except Exception as e:
             print "ERROR: %s" % (str(e))
 
