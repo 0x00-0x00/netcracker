@@ -1,8 +1,11 @@
 # coding:utf-8
+import os
 from wordlist import *
 from os import mkdir, path, remove
 from shutil import copy
 
+#  Define the project data folder
+project_folder = os.environ["HOME"] + os.sep + ".netcracker" + os.sep
 
 def custom_procedure(essid):
     formatted_essid = splitter(str(essid))
@@ -178,12 +181,11 @@ def extractData(f):
     return data
 
 
-def createMainFolder(d="netcracker"):
-    main_dir = "/opt/%s" % d
+def createMainFolder(d=project_folder):
+    main_dir = project_folder
     subfolders = ["handshakes", "database", "handshakes/cracked", "handshakes/uncracked"]
     if path.isdir(main_dir) is False:
         mkdir(main_dir)
-        main_dir += "/"
         for folder in subfolders:
             mkdir(main_dir + folder)
     return
