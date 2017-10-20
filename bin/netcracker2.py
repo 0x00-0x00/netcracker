@@ -149,7 +149,7 @@ def main():
                 try:
                     index = [x[1] for x in handshake_data].index(args.crack)
                 except:
-                    index = [str(x[0]) for x in handshake_data].index(args.crack)]
+                    index = [str(x[0]) for x in handshake_data].index(args.crack)
 
                 uncrackedDir = "/usr/share/netcracker/handshakes/uncracked/"
                 pcapFileName = str(handshake_data[index][3]).replace(" ", "")
